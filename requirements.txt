@@ -1,0 +1,3 @@
+bitstruct==8.15.1
+cc1101-python==1.2.1
+ioctl-opt==1.2.2
