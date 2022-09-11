@@ -1,0 +1,34 @@
+# Install dependencies
+sudo apt install raspberrypi-kernel-headers dkms git
+
+# Clone repository
+sudo mkdir /usr/src/cc1101-1.3.3
+sudo chown -R pi:pi /usr/src/cc1101-1.3.3
+cd /usr/src/cc1101-1.3.3
+git clone https://github.com/28757B2/cc1101-driver.git .
+
+# Only permit root to alter module source
+sudo chown -R root:root /usr/src/cc1101-1.3.3
+
+# Build with DKMS
+sudo dkms add -m cc1101 -v 1.3.3
+sudo dkms build -m cc1101 -v 1.3.3
+sudo dkms install -m cc1101 -v 1.3.3
+
+# Enable SPI
+sudo sed -i "s/^#dtparam=spi=on$/dtparam=spi=on/" /boot/config.txt
+
+# Compile Device Tree overlay
+sudo dtc -@ -I dts -O dtb -o /boot/overlays/cc1101.dtbo cc1101.dts
+
+# Enable Device Tree overlay
+echo "dtoverlay=cc1101" | sudo tee -a /boot/config.txt
+
+# Enable module loading at boot
+echo "cc1101" | sudo tee -a /etc/modules
+
+# Assign /dev/cc1101.x.x devices to pi user/group
+echo 'SUBSYSTEM=="cc1101", OWNER="pi", GROUP="pi", MODE="0660"' | sudo tee -a /etc/udev/rules.d/50-cc1101.rules
+
+# Reboot to apply config
+reboot
