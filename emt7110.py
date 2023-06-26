@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 from time import sleep
+from datetime import datetime
 from binascii import hexlify
 import bitstruct
 import platform
@@ -12,6 +13,7 @@ from cc1101 import CC1101
 from mqtt_zeroconf import zeroconfMqttClient
 
 MQTT_MODULE_TOPIC_PREFIX = "emt7110"
+
 
 # 0-3 	ID des Senders
 # 4 Bit 7/6 	Bit6 = Geräte am Stromnetz, Bit7 = Paarungsmodus
@@ -44,7 +46,7 @@ if __name__ == "__main__":
     mqttclient = zeroconfMqttClient("emt7110-%s" % hostname, sensors)
     mqttclient.message_callback(process_msg)
 
-    rx_config = RXConfig(frequency=868.28, modulation=Modulation.FSK_2, baud_rate=9.579, bandwidth=232, sync_word=0x2dd4, packet_length=12)
+    rx_config = RXConfig.new(frequency=868.28, modulation=Modulation.FSK_2, baud_rate=9.579, bandwidth=232, sync_word=0x2dd4, packet_length=12)
     radio = CC1101("/dev/cc1101.0.0", rx_config, blocking=True)
     
     cf = bitstruct.compile('s32u1u1u14u16u8u2u14u8')
@@ -55,7 +57,7 @@ if __name__ == "__main__":
         for packet in packets:
             lenght = len(packet)
             summe = sum(packet) & 0xFF
-            print(f"Received - {hexlify(packet)}, {lenght} , {summe}")
+            print(f"Received - {hexlify(packet)}, {lenght} , {summe} - {datetime.now()}")
             if summe != 0:
                 continue
             data = cf.unpack(packet)
